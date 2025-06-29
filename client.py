@@ -3,8 +3,12 @@ import socket
 
 # 读取请求文件的函数
 def read_request_file(file_path):
-    with open(file_path, 'r') as file:
-        return file.readlines()
+    try:
+        with open(file_path, 'r') as file:
+            return file.readlines()
+    except OSError as e:
+        print(f"文件打开错误: {e}")
+        return []
 
 
 # 向服务器发送请求并接收响应
@@ -35,7 +39,7 @@ def main():
     # 硬编码的服务器信息和请求文件路径
     host = 'localhost'  # 服务器的主机名或IP地址
     port = 51235  # 服务器的端口号
-    file_path = 'C:\\Users\\Administrator\\Desktop\\Ass4\\Ass4\\client\\src\\client_1.txt'  # 请求文件路径
+    file_path = r'C:\Users\Administrator\Desktop\a3\a3\client_1.txt'  # 请求文件路径
 
     # 读取请求文件
     requests = read_request_file(file_path)

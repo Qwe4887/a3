@@ -3,25 +3,28 @@ import threading
 
 # 定义服务器的IP和端口
 HOST = 'localhost'  # 服务器地址，'localhost' 表示本机
-PORT = 51235        # 更改端口号以避免冲突
+PORT = 51235  # 端口号，必须与客户端保持一致
+
+# 存储元组空间
+tuple_space = {}
+
 
 # 处理客户端请求的函数
 def handle_client(client_socket, client_address):
     print(f"新客户端连接: {client_address}")
 
-    # 发送欢迎信息，将中文编码为UTF-8
-    client_socket.send("欢迎连接到服务器！\n".encode('utf-8'))
-
     while True:
         try:
-            # 接收客户端发送的消息
-            request = client_socket.recv(1024)
+            # 接收客户端发送的请求
+            request = client_socket.recv(1024).decode('utf-8').strip()
             if not request:
-                break
-            print(f"收到来自 {client_address} 的消息: {request.decode()}")
+                break  # 如果没有请求，断开连接
 
-            # 这里只是一个简单的回显示例
-            client_socket.send(f"服务器响应: {request.decode()}\n".encode('utf-8'))
+            print(f"收到请求: {request}")
+            # 解析请求
+            response = handle_request(request)
+            # 发送响应
+            client_socket.send(response.encode('utf-8'))
 
         except Exception as e:
             print(f"处理客户端 {client_address} 时发生错误: {e}")
@@ -30,6 +33,42 @@ def handle_client(client_socket, client_address):
     # 关闭连接
     client_socket.close()
     print(f"客户端 {client_address} 断开连接")
+
+
+# 处理请求的函数
+def handle_request(request):
+    print(f"处理请求: {request}")  # 打印请求内容
+    parts = request.split(" ", 1)
+    if len(parts) < 2:
+        return "无效的请求格式"
+
+    command = parts[0]
+    key_value = parts[1]
+
+    if command == "PUT":
+        key, value = key_value.split(" ", 1)
+        tuple_space[key] = value
+        print(f"PUT 请求处理: {key} -> {value}")  # 打印 PUT 请求的处理结果
+        return f"OK ({key}, {value}) added"
+
+    elif command == "GET":
+        if key_value in tuple_space:
+            value = tuple_space.pop(key_value)
+            print(f"GET 请求处理: 删除 {key_value} -> {value}")  # 打印 GET 请求的处理结果
+            return f"OK ({key_value}, {value}) removed"
+        else:
+            return "错误：键未找到"
+
+    elif command == "READ":
+        if key_value in tuple_space:
+            print(f"READ 请求处理: {key_value} -> {tuple_space[key_value]}")  # 打印 READ 请求的处理结果
+            return f"OK ({key_value}, {tuple_space[key_value]})"
+        else:
+            return "错误：键未找到"
+
+    else:
+        return "无效的命令"
+
 
 # 启动服务器
 def start_server():
@@ -46,6 +85,7 @@ def start_server():
         # 为每个客户端创建一个新线程来处理请求
         client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
         client_thread.start()
+
 
 # 启动服务器
 if __name__ == "__main__":
