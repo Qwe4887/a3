@@ -38,6 +38,8 @@ def handle_client(client_socket, client_address):
 # 处理请求的函数
 def handle_request(request):
     print(f"处理请求: {request}")  # 打印请求内容
+    print(f"当前元组空间: {tuple_space}")  # 打印当前元组空间，帮助调试
+
     parts = request.split(" ", 1)
     if len(parts) < 2:
         return "无效的请求格式"
